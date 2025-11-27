@@ -1,0 +1,730 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Spotify Streaming Analyzer</title>
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            background: linear-gradient(135deg, #0a0e27 0%, #1a0b2e 50%, #16213e 100%);
+            color: #FFFFFF;
+            min-height: 100vh;
+            padding: 20px;
+            position: relative;
+            overflow-x: hidden;
+        }
+
+        /* Animated background particles */
+        body::before {
+            content: '';
+            position: fixed;
+            width: 200%;
+            height: 200%;
+            top: -50%;
+            left: -50%;
+            background-image: 
+                radial-gradient(circle at 20% 50%, rgba(29, 185, 84, 0.1) 0%, transparent 50%),
+                radial-gradient(circle at 80% 80%, rgba(30, 215, 96, 0.08) 0%, transparent 50%),
+                radial-gradient(circle at 40% 20%, rgba(29, 185, 84, 0.06) 0%, transparent 50%);
+            animation: pulse 20s ease-in-out infinite;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: translate(0, 0) scale(1); }
+            50% { transform: translate(-5%, -5%) scale(1.1); }
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            position: relative;
+            z-index: 1;
+        }
+
+        /* Header Section */
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+            animation: fadeInDown 0.8s ease-out;
+        }
+
+        @keyframes fadeInDown {
+            from {
+                opacity: 0;
+                transform: translateY(-30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .header h1 {
+            font-size: 3.5em;
+            font-weight: 800;
+            background: linear-gradient(135deg, #1DB954 0%, #1ed760 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 10px;
+            letter-spacing: -2px;
+        }
+
+        .header p {
+            color: #b3b3b3;
+            font-size: 1.1em;
+            font-weight: 300;
+        }
+
+        /* Upload Section */
+        .upload-section {
+            background: rgba(255, 255, 255, 0.03);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 24px;
+            padding: 40px;
+            margin-bottom: 40px;
+            text-align: center;
+            animation: fadeIn 0.8s ease-out 0.2s backwards;
+            transition: all 0.3s ease;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .upload-section:hover {
+            border-color: rgba(29, 185, 84, 0.3);
+            box-shadow: 0 8px 32px rgba(29, 185, 84, 0.1);
+        }
+
+        .upload-zone {
+            position: relative;
+            cursor: pointer;
+        }
+
+        .upload-label {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            padding: 20px 40px;
+            background: linear-gradient(135deg, #1DB954 0%, #1ed760 100%);
+            border: none;
+            border-radius: 50px;
+            color: #000;
+            font-weight: 700;
+            font-size: 1.1em;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(29, 185, 84, 0.3);
+        }
+
+        .upload-label:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 25px rgba(29, 185, 84, 0.4);
+        }
+
+        .upload-label:active {
+            transform: translateY(0);
+        }
+
+        #file-upload {
+            display: none;
+        }
+
+        .status-text {
+            margin-top: 20px;
+            color: #b3b3b3;
+            font-size: 0.95em;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .status-text.success {
+            color: #1DB954;
+            font-weight: 600;
+        }
+
+        /* Stats Overview */
+        .stats-overview {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 40px;
+            animation: fadeIn 0.8s ease-out 0.4s backwards;
+        }
+
+        .stat-card {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+            padding: 30px;
+            text-align: center;
+            transition: all 0.3s ease;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-5px);
+            border-color: rgba(29, 185, 84, 0.3);
+            box-shadow: 0 8px 32px rgba(29, 185, 84, 0.1);
+        }
+
+        .stat-value {
+            font-size: 2.5em;
+            font-weight: 800;
+            background: linear-gradient(135deg, #1DB954 0%, #1ed760 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 8px;
+        }
+
+        .stat-label {
+            color: #b3b3b3;
+            font-size: 0.9em;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            font-weight: 500;
+        }
+
+        /* Leaderboards Grid */
+        .leaderboards-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(450px, 1fr));
+            gap: 30px;
+            animation: fadeIn 0.8s ease-out 0.6s backwards;
+        }
+
+        .leaderboard-card {
+            background: rgba(255, 255, 255, 0.03);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 24px;
+            padding: 30px;
+            transition: all 0.3s ease;
+        }
+
+        .leaderboard-card:hover {
+            border-color: rgba(29, 185, 84, 0.2);
+        }
+
+        .leaderboard-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 25px;
+        }
+
+        .leaderboard-header h2 {
+            font-size: 1.5em;
+            font-weight: 700;
+            color: #fff;
+        }
+
+        .leaderboard-icon {
+            font-size: 1.8em;
+        }
+
+        .table-container {
+            max-height: 500px;
+            overflow-y: auto;
+            border-radius: 12px;
+        }
+
+        .table-container::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .table-container::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 10px;
+        }
+
+        .table-container::-webkit-scrollbar-thumb {
+            background: rgba(29, 185, 84, 0.3);
+            border-radius: 10px;
+        }
+
+        .table-container::-webkit-scrollbar-thumb:hover {
+            background: rgba(29, 185, 84, 0.5);
+        }
+
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .data-table thead {
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+
+        .data-table th {
+            background: rgba(20, 20, 40, 0.95);
+            backdrop-filter: blur(20px);
+            color: #1DB954;
+            padding: 15px;
+            text-align: left;
+            font-weight: 600;
+            text-transform: uppercase;
+            font-size: 0.85em;
+            letter-spacing: 0.5px;
+            border-bottom: 2px solid rgba(29, 185, 84, 0.2);
+        }
+
+        .data-table td {
+            padding: 18px 15px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .data-table tr {
+            transition: all 0.2s ease;
+        }
+
+        .data-table tbody tr:hover {
+            background: rgba(29, 185, 84, 0.08);
+        }
+
+        .rank-cell {
+            font-weight: 700;
+            color: #1DB954;
+            font-size: 1.1em;
+        }
+
+        .artist-name-link {
+            color: #fff;
+            cursor: pointer;
+            font-weight: 600;
+            text-decoration: none;
+            transition: all 0.2s ease;
+            display: inline-block;
+        }
+
+        .artist-name-link:hover {
+            color: #1DB954;
+            transform: translateX(4px);
+        }
+
+        .track-info {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .track-name {
+            font-weight: 600;
+            color: #fff;
+        }
+
+        .track-artist {
+            color: #b3b3b3;
+            font-size: 0.85em;
+        }
+
+        .stream-count {
+            font-weight: 600;
+            color: #1ed760;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #666;
+        }
+
+        .empty-state-icon {
+            font-size: 4em;
+            margin-bottom: 20px;
+            opacity: 0.3;
+        }
+
+        /* Artist Drilldown Modal */
+        .drilldown-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(10px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            padding: 20px;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s ease;
+        }
+
+        .drilldown-overlay.active {
+            opacity: 1;
+            pointer-events: all;
+        }
+
+        .drilldown-modal {
+            background: rgba(20, 20, 40, 0.95);
+            backdrop-filter: blur(40px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 24px;
+            padding: 40px;
+            max-width: 800px;
+            width: 100%;
+            max-height: 90vh;
+            overflow-y: auto;
+            transform: scale(0.9);
+            transition: transform 0.3s ease;
+        }
+
+        .drilldown-overlay.active .drilldown-modal {
+            transform: scale(1);
+        }
+
+        .drilldown-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+        }
+
+        .drilldown-title {
+            font-size: 2em;
+            font-weight: 700;
+            color: #fff;
+        }
+
+        .close-btn {
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: #fff;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5em;
+            transition: all 0.3s ease;
+        }
+
+        .close-btn:hover {
+            background: rgba(255, 255, 255, 0.2);
+            transform: rotate(90deg);
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .header h1 {
+                font-size: 2.5em;
+            }
+
+            .leaderboards-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .upload-section {
+                padding: 30px 20px;
+            }
+
+            .drilldown-modal {
+                padding: 30px 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <div class="header">
+            <h1>🎧 Spotify Stats Analyzer</h1>
+            <p>Discover your listening patterns and favorite tracks</p>
+        </div>
+
+        <!-- Upload Section -->
+        <div class="upload-section">
+            <div class="upload-zone">
+                <label for="file-upload" class="upload-label">
+                    <span>📁</span>
+                    <span>Choose Your Spotify JSON Files</span>
+                </label>
+                <input type="file" id="file-upload" accept=".json" multiple>
+                <p id="file-status" class="status-text">No files selected</p>
+            </div>
+        </div>
+
+        <!-- Stats Overview -->
+        <div class="stats-overview hidden" id="stats-section">
+            <div class="stat-card">
+                <div class="stat-value" id="total-streams">0</div>
+                <div class="stat-label">Total Streams</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="unique-artists">0</div>
+                <div class="stat-label">Unique Artists</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="unique-songs">0</div>
+                <div class="stat-label">Unique Songs</div>
+            </div>
+        </div>
+
+        <!-- Leaderboards -->
+        <div class="leaderboards-grid">
+            <!-- Top Artists -->
+            <div class="leaderboard-card">
+                <div class="leaderboard-header">
+                    <span class="leaderboard-icon">🎤</span>
+                    <h2>Top Artists</h2>
+                </div>
+                <div id="artist-leaderboard" class="table-container">
+                    <div class="empty-state">
+                        <div class="empty-state-icon">🎵</div>
+                        <p>Upload your data to see your top artists</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Top Songs -->
+            <div class="leaderboard-card">
+                <div class="leaderboard-header">
+                    <span class="leaderboard-icon">🎵</span>
+                    <h2>Top Songs</h2>
+                </div>
+                <div id="song-leaderboard" class="table-container">
+                    <div class="empty-state">
+                        <div class="empty-state-icon">🎧</div>
+                        <p>Upload your data to see your top songs</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Artist Drilldown Modal -->
+    <div class="drilldown-overlay" id="drilldown-overlay">
+        <div class="drilldown-modal">
+            <div class="drilldown-header">
+                <h2 class="drilldown-title" id="artist-drilldown-title">Artist Songs</h2>
+                <button class="close-btn" id="close-drilldown-btn">×</button>
+            </div>
+            <div id="artist-song-leaderboard" class="table-container"></div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // DOM Elements
+            const fileInput = document.getElementById('file-upload');
+            const fileStatus = document.getElementById('file-status');
+            const statsSection = document.getElementById('stats-section');
+            const totalStreamsEl = document.getElementById('total-streams');
+            const uniqueArtistsEl = document.getElementById('unique-artists');
+            const uniqueSongsEl = document.getElementById('unique-songs');
+            
+            // Containers
+            const artistLeaderboardContainer = document.getElementById('artist-leaderboard');
+            const songLeaderboardContainer = document.getElementById('song-leaderboard');
+            const drilldownOverlay = document.getElementById('drilldown-overlay');
+            const artistDrilldownTitle = document.getElementById('artist-drilldown-title');
+            const artistSongContainer = document.getElementById('artist-song-leaderboard');
+            const closeDrilldownBtn = document.getElementById('close-drilldown-btn');
+
+            // Global Data Store
+            let processedData = {
+                songs: {},
+                artists: {}
+            };
+
+            // Event Listeners
+            fileInput.addEventListener('change', handleFileUpload);
+            closeDrilldownBtn.addEventListener('click', closeDrilldown);
+            drilldownOverlay.addEventListener('click', (e) => {
+                if (e.target === drilldownOverlay) closeDrilldown();
+            });
+
+            function handleFileUpload(event) {
+                const files = event.target.files;
+                if (!files.length) return;
+
+                fileStatus.textContent = `Processing ${files.length} file(s)...`;
+                fileStatus.className = 'status-text';
+                
+                processedData = { songs: {}, artists: {} };
+
+                const fileReaders = [];
+
+                Array.from(files).forEach(file => {
+                    const reader = new FileReader();
+                    
+                    const filePromise = new Promise((resolve, reject) => {
+                        reader.onload = (e) => {
+                            try {
+                                const json = JSON.parse(e.target.result);
+                                processJSON(json);
+                                resolve();
+                            } catch (error) {
+                                console.error(`Error parsing file ${file.name}:`, error);
+                                reject(error);
+                            }
+                        };
+                        reader.onerror = reject;
+                    });
+
+                    reader.readAsText(file);
+                    fileReaders.push(filePromise);
+                });
+
+                Promise.all(fileReaders)
+                    .then(() => {
+                        fileStatus.textContent = `✓ Successfully processed ${files.length} file(s)!`;
+                        fileStatus.className = 'status-text success';
+                        renderLeaderboards();
+                        updateStats();
+                    })
+                    .catch(() => {
+                        fileStatus.textContent = "✗ Error processing files";
+                        fileStatus.className = 'status-text';
+                    });
+            }
+
+            function processJSON(data) {
+                if (!Array.isArray(data)) return;
+
+                data.forEach(stream => {
+                    if (stream.msPlayed < 1000) return;
+
+                    const artist = stream.artistName;
+                    const track = stream.trackName;
+                    const songKey = `${track}|||${artist}`;
+
+                    if (!processedData.songs[songKey]) {
+                        processedData.songs[songKey] = {
+                            trackName: track,
+                            artistName: artist,
+                            count: 0
+                        };
+                    }
+                    processedData.songs[songKey].count++;
+
+                    if (!processedData.artists[artist]) {
+                        processedData.artists[artist] = {
+                            artistName: artist,
+                            count: 0
+                        };
+                    }
+                    processedData.artists[artist].count++;
+                });
+            }
+
+            function updateStats() {
+                const totalStreams = Object.values(processedData.artists).reduce((sum, a) => sum + a.count, 0);
+                const uniqueArtists = Object.keys(processedData.artists).length;
+                const uniqueSongs = Object.keys(processedData.songs).length;
+
+                totalStreamsEl.textContent = totalStreams.toLocaleString();
+                uniqueArtistsEl.textContent = uniqueArtists.toLocaleString();
+                uniqueSongsEl.textContent = uniqueSongs.toLocaleString();
+                
+                statsSection.classList.remove('hidden');
+            }
+
+            function renderLeaderboards() {
+                const sortedArtists = Object.values(processedData.artists)
+                    .sort((a, b) => b.count - a.count);
+
+                const sortedSongs = Object.values(processedData.songs)
+                    .sort((a, b) => b.count - a.count);
+
+                artistLeaderboardContainer.innerHTML = createTableHTML(sortedArtists, 'artist');
+                songLeaderboardContainer.innerHTML = createTableHTML(sortedSongs, 'song');
+
+                document.querySelectorAll('.artist-name-link').forEach(link => {
+                    link.addEventListener('click', (e) => {
+                        const artistName = e.target.dataset.artist;
+                        showArtistDetails(artistName);
+                    });
+                });
+            }
+
+            function showArtistDetails(artistName) {
+                const artistSongs = Object.values(processedData.songs)
+                    .filter(song => song.artistName === artistName)
+                    .sort((a, b) => b.count - a.count);
+
+                artistDrilldownTitle.textContent = `${artistName} • Top Songs`;
+                artistSongContainer.innerHTML = createTableHTML(artistSongs, 'song-simple');
+                
+                drilldownOverlay.classList.add('active');
+            }
+
+            function closeDrilldown() {
+                drilldownOverlay.classList.remove('active');
+            }
+
+            function createTableHTML(data, type) {
+                const topData = data.slice(0, 100);
+
+                if (topData.length === 0) return '<div class="empty-state"><p>No data found</p></div>';
+
+                let html = `<table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>${type === 'artist' ? 'Artist' : 'Track'}</th>
+                            <th>Streams</th>
+                        </tr>
+                    </thead>
+                    <tbody>`;
+
+                topData.forEach((item, index) => {
+                    let nameCell = '';
+                    
+                    if (type === 'artist') {
+                        nameCell = `<span class="artist-name-link" data-artist="${item.artistName}">${item.artistName}</span>`;
+                    } else if (type === 'song') {
+                        nameCell = `<div class="track-info">
+                            <span class="track-name">${item.trackName}</span>
+                            <span class="track-artist">${item.artistName}</span>
+                        </div>`;
+                    } else {
+                        nameCell = `<span class="track-name">${item.trackName}</span>`;
+                    }
+
+                    html += `<tr>
+                        <td class="rank-cell">${index + 1}</td>
+                        <td>${nameCell}</td>
+                        <td class="stream-count">${item.count.toLocaleString()}</td>
+                    </tr>`;
+                });
+
+                html += `</tbody></table>`;
+                return html;
+            }
+        });
+    </script>
+</body>
+</html>

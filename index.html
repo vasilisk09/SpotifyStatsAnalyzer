@@ -654,9 +654,11 @@
 
             function renderLeaderboards() {
                 const sortedArtists = Object.values(processedData.artists)
+                    .filter(artist => artist.artistName !== 'Unknown Artist')
                     .sort((a, b) => b.count - a.count);
 
                 const sortedSongs = Object.values(processedData.songs)
+                    .filter(song => song.trackName !== 'Unknown Track' && song.artistName !== 'Unknown Artist')
                     .sort((a, b) => b.count - a.count);
 
                 artistLeaderboardContainer.innerHTML = createTableHTML(sortedArtists, 'artist');
@@ -672,7 +674,7 @@
 
             function showArtistDetails(artistName) {
                 const artistSongs = Object.values(processedData.songs)
-                    .filter(song => song.artistName === artistName)
+                    .filter(song => song.artistName === artistName && song.trackName !== 'Unknown Track')
                     .sort((a, b) => b.count - a.count);
 
                 artistDrilldownTitle.textContent = `${artistName} • Top Songs`;
